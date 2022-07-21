@@ -3,11 +3,13 @@ use bevy::{
     prelude::*,
     render::camera::{RenderTarget, ScalingMode},
 };
+use debug::DebugPlugin;
 use map::MapPlugin;
 
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.15;
 
+mod debug;
 mod map;
 
 fn main() {
@@ -25,6 +27,7 @@ fn main() {
         .add_startup_system(spawn_camera)
         .add_startup_system(spawn_cursor_marker)
         .add_plugin(MapPlugin)
+        .add_plugin(DebugPlugin)
         .add_system(cursor_position)
         .run();
 }
