@@ -36,7 +36,8 @@ impl Tower {
         }
         true
     }
-    pub fn create_tower(commands: &mut Commands, translation: Vec3) {
+
+    pub fn create_tower(mut commands: Commands, translation: Vec3) {
         commands
             .spawn_bundle(SpriteBundle {
                 sprite: Sprite {
@@ -50,6 +51,7 @@ impl Tower {
                 },
                 ..Default::default()
             })
-            .insert(Tower { health: 100.0 });
+            .insert(Tower { health: 100.0 })
+            .insert(Name::new("Tower"));
     }
 }

@@ -7,6 +7,8 @@ use debug::DebugPlugin;
 use map::MapPlugin;
 use tower::TowerPlugin;
 
+use crate::tower::Tower;
+
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.15;
 
@@ -69,11 +71,13 @@ fn spawn_cursor_marker(mut commands: Commands) {
 }
 
 fn cursor_position(
+    mut commands: Commands,
     // need to get window dimensions
     wnds: Res<Windows>,
     // query to get camera transform
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
     mut q_marker: Query<&mut Transform, With<CursorMarker>>,
+    buttons: Res<Input<MouseButton>>,
 ) {
     // get the camera info and transform
     // assuming there is exactly one main camera entity, so query::single() is OK
@@ -109,5 +113,8 @@ fn cursor_position(
         let mut marker = q_marker.single_mut();
         marker.translation.x = tile_x * TILE_SIZE;
         marker.translation.y = tile_y * TILE_SIZE;
+        if buttons.just_pressed(MouseButton::Left) {
+            Tower::create_tower(commands, marker.translation);
+        }
     }
 }
