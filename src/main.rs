@@ -5,12 +5,14 @@ use bevy::{
 };
 use debug::DebugPlugin;
 use map::MapPlugin;
+use tower::TowerPlugin;
 
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.15;
 
 mod debug;
 mod map;
+mod tower;
 
 fn main() {
     let height = 900.0;
@@ -28,6 +30,7 @@ fn main() {
         .add_startup_system(spawn_cursor_marker)
         .add_plugin(MapPlugin)
         .add_plugin(DebugPlugin)
+        .add_plugin(TowerPlugin)
         .add_system(cursor_position)
         .run();
 }
@@ -100,13 +103,10 @@ fn cursor_position(
         // reduce it to a 2D value
         let world_pos: Vec2 = world_pos.truncate();
 
-        eprintln!("World coords: {}/{}", world_pos.x, world_pos.y);
-
         let tile_x = ((world_pos.x + TILE_SIZE / 2.0) / TILE_SIZE).floor();
         let tile_y = ((world_pos.y + TILE_SIZE / 2.0) / TILE_SIZE).floor();
 
         let mut marker = q_marker.single_mut();
-        println!("Tiles: {} {}", tile_x, tile_y);
         marker.translation.x = tile_x * TILE_SIZE;
         marker.translation.y = tile_y * TILE_SIZE;
     }
