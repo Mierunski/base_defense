@@ -6,6 +6,7 @@ use bevy::{
 use debug::DebugPlugin;
 use map::MapPlugin;
 use tower::TowerPlugin;
+use user_interface::UserInterfacePlugin;
 
 use crate::tower::Tower;
 
@@ -15,6 +16,7 @@ pub const TILE_SIZE: f32 = 0.15;
 mod debug;
 mod map;
 mod tower;
+mod user_interface;
 
 fn main() {
     let height = 900.0;
@@ -33,6 +35,7 @@ fn main() {
         .add_plugin(MapPlugin)
         .add_plugin(DebugPlugin)
         .add_plugin(TowerPlugin)
+        .add_plugin(UserInterfacePlugin)
         .add_system(cursor_position)
         .run();
 }
