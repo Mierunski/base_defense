@@ -1,4 +1,6 @@
-use bevy::prelude::*;
+use std::f32::consts::E;
+
+use bevy::{prelude::*, sprite::Anchor};
 use bevy_inspector_egui::Inspectable;
 
 use crate::TILE_SIZE;
@@ -8,7 +10,11 @@ pub struct TowerPlugin;
 #[derive(Component, Inspectable)]
 pub struct Tower {
     health: f32,
+    hp_bar: Entity,
 }
+
+#[derive(Component)]
+pub struct HPBar;
 
 impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
@@ -18,12 +24,20 @@ impl Plugin for TowerPlugin {
 
 fn update_towers(
     mut commands: Commands,
-    mut q_towers: Query<(Entity, &mut Tower)>,
+    mut q_towers: Query<(Entity, &Children, &mut Tower)>,
+    mut q_bars: Query<&mut Sprite, With<HPBar>>,
     time: Res<Time>,
 ) {
-    for (entity, mut tower) in q_towers.iter_mut() {
+    for (entity, children, mut tower) in q_towers.iter_mut() {
+        for child in children.iter() {
+            if let Ok(mut sprite) = q_bars.get_mut(*child) {
+                if let Some(size) = sprite.custom_size.as_mut() {
+                    size.x = (TILE_SIZE * 0.85) * (tower.health / 100.0);
+                }
+            }
+        }
         if !tower.update(time.delta_seconds()) {
-            commands.entity(entity).despawn();
+            commands.entity(entity).despawn_recursive();
         }
     }
 }
@@ -38,7 +52,39 @@ impl Tower {
     }
 
     pub fn create_tower(mut commands: Commands, translation: Vec3) {
-        commands
+        let hp_frame = commands
+            .spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0.1, 0.1, 0.1),
+                    custom_size: Some(Vec2::new(TILE_SIZE * 0.9, TILE_SIZE * 0.15)),
+                    ..Default::default()
+                },
+                transform: Transform {
+                    translation: Vec3::new(0.0, TILE_SIZE * 0.5, 10.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+            .id();
+
+        let hp_bar = commands
+            .spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0.1, 0.9, 0.1),
+                    custom_size: Some(Vec2::new(TILE_SIZE * 0.85, TILE_SIZE * 0.1)),
+                    anchor: Anchor::CenterLeft,
+                    ..Default::default()
+                },
+                transform: Transform {
+                    translation: Vec3::new(-TILE_SIZE * 0.425, TILE_SIZE * 0.5, 11.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+            .insert(HPBar)
+            .id();
+
+        let tower = commands
             .spawn_bundle(SpriteBundle {
                 sprite: Sprite {
                     color: Color::rgb(0.8, 0.2, 0.2),
@@ -51,7 +97,12 @@ impl Tower {
                 },
                 ..Default::default()
             })
-            .insert(Tower { health: 100.0 })
-            .insert(Name::new("Tower"));
+            .insert(Tower {
+                health: 100.0,
+                hp_bar,
+            })
+            .insert(Name::new("Tower"))
+            .id();
+        commands.entity(tower).add_child(hp_frame).add_child(hp_bar);
     }
 }
