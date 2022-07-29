@@ -51,7 +51,7 @@ impl Tower {
         true
     }
 
-    pub fn create_tower(mut commands: Commands, translation: Vec3) {
+    pub fn create_tower(mut commands: Commands, translation: Vec3, asset_server: Res<AssetServer>) {
         let hp_frame = commands
             .spawn_bundle(SpriteBundle {
                 sprite: Sprite {
@@ -91,6 +91,7 @@ impl Tower {
                     custom_size: Some(Vec2::splat(TILE_SIZE * 0.7)),
                     ..Default::default()
                 },
+                texture: asset_server.load("sprites/tower.png"),
                 transform: Transform {
                     translation,
                     ..Default::default()

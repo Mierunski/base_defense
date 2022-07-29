@@ -81,6 +81,7 @@ fn cursor_position(
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
     mut q_marker: Query<&mut Transform, With<CursorMarker>>,
     buttons: Res<Input<MouseButton>>,
+    asset_server: Res<AssetServer>,
 ) {
     // get the camera info and transform
     // assuming there is exactly one main camera entity, so query::single() is OK
@@ -117,7 +118,7 @@ fn cursor_position(
         marker.translation.x = tile_x * TILE_SIZE;
         marker.translation.y = tile_y * TILE_SIZE;
         if buttons.just_pressed(MouseButton::Left) {
-            Tower::create_tower(commands, marker.translation);
+            Tower::create_tower(commands, marker.translation, asset_server);
         }
     }
 }
