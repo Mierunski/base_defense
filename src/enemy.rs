@@ -1,7 +1,7 @@
-use bevy::prelude::*;
+use bevy::{math::Vec3Swizzles, prelude::*, transform};
 use bevy_inspector_egui::Inspectable;
 
-use crate::TILE_SIZE;
+use crate::{tower::Tower, TILE_SIZE};
 
 pub struct EnemyPlugin;
 
@@ -19,7 +19,33 @@ impl Plugin for EnemyPlugin {
     }
 }
 
-fn update_enemies(mut commands: Commands) {}
+fn update_enemies(
+    mut commands: Commands,
+    mut q_towers: Query<(Entity, &mut Tower, &mut Transform), Without<Enemy>>,
+    mut q_enemies: Query<(Entity, &mut Enemy, &mut Transform), Without<Tower>>,
+    time: Res<Time>,
+) {
+    for (entity, mut enemy, mut transform) in q_enemies.iter_mut() {
+        let mut longest = f32::INFINITY;
+        let mut target = Vec3::ZERO;
+        for (e_tower, mut tower, mut t_tower) in q_towers.iter_mut() {
+            let diff = t_tower.translation - transform.translation;
+            let cur_len = diff.length_squared();
+            if cur_len < longest {
+                longest = cur_len;
+                target = diff;
+            }
+        }
+
+        if longest.is_infinite() {
+            continue;
+        }
+        let norm_target = target.xy().normalize().extend(1.0);
+        debug!(?norm_target);
+        let movement = norm_target * enemy.speed * time.delta_seconds();
+        transform.translation += movement;
+    }
+}
 
 impl Enemy {
     pub fn new(mut commands: Commands, mut translation: Vec3, asset_server: Res<AssetServer>) {
@@ -41,7 +67,7 @@ impl Enemy {
             .insert(Enemy {
                 attack: 10.0,
                 max_hp: 100.0,
-                speed: 0.2 * TILE_SIZE,
+                speed: 3.0 * TILE_SIZE,
                 health: 100.0,
             })
             .insert(Name::new("Enemy"))
