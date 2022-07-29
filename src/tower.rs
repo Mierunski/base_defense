@@ -24,40 +24,43 @@ impl Plugin for TowerPlugin {
 
 fn update_towers(
     mut commands: Commands,
-    mut q_towers: Query<(Entity, &Children, &mut Tower, &mut Transform)>,
-    mut q_bars: Query<&mut Sprite, With<HPBar>>,
+    mut q_towers: Query<(Entity, &mut Tower, &mut Transform)>,
+    mut q_bars: Query<(&mut Sprite, &mut Transform), (With<HPBar>, Without<Tower>)>,
     time: Res<Time>,
 ) {
-    let mut positions = Vec::new();
-    for (entity, children, mut tower, mut transform) in q_towers.iter_mut() {
-        for child in children.iter() {
-            if let Ok(mut sprite) = q_bars.get_mut(*child) {
-                if let Some(size) = sprite.custom_size.as_mut() {
-                    size.x = (TILE_SIZE * 0.85) * (tower.health / 100.0);
-                }
-            }
-        }
+    for (entity, mut tower, mut transform) in q_towers.iter_mut() {
         let pos: Vec2 = transform.translation.truncate();
         let target: Vec2 = Vec2::new(0.0, 0.0);
 
         let angle = (pos - target).angle_between(Vec2::new(1.0, 0.0)) - PI / 2.0;
         if !angle.is_nan() {
-            positions.push((pos, angle.to_degrees()));
             transform.rotation = Quat::from_rotation_z(-angle);
         }
+
+        if let Ok((mut sprite, mut transform)) = q_bars.get_mut(tower.hp_bar) {
+            if let Some(size) = sprite.custom_size.as_mut() {
+                size.x = (TILE_SIZE * 0.85) * (tower.health / 100.0);
+            }
+
+            if !angle.is_nan() {
+                let rot = Quat::from_rotation_z(angle);
+
+                debug!("{:?}", transform);
+                transform.translation =
+                    rot.mul_vec3(Vec3::new(-TILE_SIZE * 0.425, TILE_SIZE * 0.5, 11.0));
+                transform.rotation = rot;
+            }
+        }
+
         if !tower.update(time.delta_seconds()) {
             commands.entity(entity).despawn_recursive();
         }
     }
-    for (p, d) in positions {
-        print!("{} {},", p, d);
-    }
-    print!("\n");
 }
 
 impl Tower {
     fn update(&mut self, time: f32) -> bool {
-        self.health -= 5.0 * time;
+        self.health -= 20.0 * time;
         if self.health < 0.0 {
             return false;
         }
@@ -73,13 +76,12 @@ impl Tower {
                     ..Default::default()
                 },
                 transform: Transform {
-                    translation: Vec3::new(0.0, TILE_SIZE * 0.5, 10.0),
+                    translation: Vec3::new(TILE_SIZE * 0.425, 0.0, -0.1),
                     ..Default::default()
                 },
                 ..Default::default()
             })
             .id();
-
         let hp_bar = commands
             .spawn_bundle(SpriteBundle {
                 sprite: Sprite {
@@ -95,6 +97,7 @@ impl Tower {
                 ..Default::default()
             })
             .insert(HPBar)
+            .add_child(hp_frame)
             .id();
 
         let tower = commands
@@ -117,6 +120,6 @@ impl Tower {
             })
             .insert(Name::new("Tower"))
             .id();
-        commands.entity(tower).add_child(hp_frame).add_child(hp_bar);
+        commands.entity(tower).add_child(hp_bar);
     }
 }

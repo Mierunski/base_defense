@@ -1,5 +1,6 @@
 use bevy::{
     input::mouse::MouseMotion,
+    log::{Level, LogSettings},
     prelude::*,
     render::camera::{RenderTarget, ScalingMode},
 };
@@ -28,6 +29,10 @@ fn main() {
             present_mode: bevy::window::PresentMode::Fifo,
             resizable: false,
             ..Default::default()
+        })
+        .insert_resource(LogSettings {
+            level: Level::TRACE,
+            filter: "info,wgpu_core=warn,wgpu_hal=warn,base_defense::tower=info".to_string(),
         })
         .add_plugins(DefaultPlugins)
         .add_startup_system(spawn_camera)
