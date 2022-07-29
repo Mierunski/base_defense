@@ -1,10 +1,10 @@
 use bevy::{
-    input::mouse::MouseMotion,
     log::{Level, LogSettings},
     prelude::*,
     render::camera::{RenderTarget, ScalingMode},
 };
 use debug::DebugPlugin;
+use enemy::{Enemy, EnemyPlugin};
 use map::MapPlugin;
 use tower::TowerPlugin;
 use user_interface::UserInterfacePlugin;
@@ -15,6 +15,7 @@ pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.15;
 
 mod debug;
+mod enemy;
 mod map;
 mod tower;
 mod user_interface;
@@ -41,6 +42,7 @@ fn main() {
         .add_plugin(DebugPlugin)
         .add_plugin(TowerPlugin)
         .add_plugin(UserInterfacePlugin)
+        .add_plugin(EnemyPlugin)
         .add_system(cursor_position)
         .run();
 }
@@ -113,9 +115,6 @@ fn cursor_position(
         // use it to convert ndc to world-space coordinates
         let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
 
-        // reduce it to a 2D value
-        let world_pos: Vec2 = world_pos.truncate();
-
         let tile_x = ((world_pos.x + TILE_SIZE / 2.0) / TILE_SIZE).floor();
         let tile_y = ((world_pos.y + TILE_SIZE / 2.0) / TILE_SIZE).floor();
 
@@ -124,6 +123,8 @@ fn cursor_position(
         marker.translation.y = tile_y * TILE_SIZE;
         if buttons.just_pressed(MouseButton::Left) {
             Tower::create_tower(commands, marker.translation, asset_server);
+        } else if buttons.just_pressed(MouseButton::Right) {
+            Enemy::new(commands, world_pos, asset_server);
         }
     }
 }
