@@ -1,4 +1,4 @@
-use std::f32::consts::E;
+use std::f32::consts::PI;
 
 use bevy::{prelude::*, sprite::Anchor};
 use bevy_inspector_egui::Inspectable;
@@ -24,11 +24,12 @@ impl Plugin for TowerPlugin {
 
 fn update_towers(
     mut commands: Commands,
-    mut q_towers: Query<(Entity, &Children, &mut Tower)>,
+    mut q_towers: Query<(Entity, &Children, &mut Tower, &mut Transform)>,
     mut q_bars: Query<&mut Sprite, With<HPBar>>,
     time: Res<Time>,
 ) {
-    for (entity, children, mut tower) in q_towers.iter_mut() {
+    let mut positions = Vec::new();
+    for (entity, children, mut tower, mut transform) in q_towers.iter_mut() {
         for child in children.iter() {
             if let Ok(mut sprite) = q_bars.get_mut(*child) {
                 if let Some(size) = sprite.custom_size.as_mut() {
@@ -36,10 +37,22 @@ fn update_towers(
                 }
             }
         }
+        let pos: Vec2 = transform.translation.truncate();
+        let target: Vec2 = Vec2::new(0.0, 0.0);
+
+        let angle = (pos - target).angle_between(Vec2::new(1.0, 0.0)) - PI / 2.0;
+        if !angle.is_nan() {
+            positions.push((pos, angle.to_degrees()));
+            transform.rotation = Quat::from_rotation_z(-angle);
+        }
         if !tower.update(time.delta_seconds()) {
             commands.entity(entity).despawn_recursive();
         }
     }
+    for (p, d) in positions {
+        print!("{} {},", p, d);
+    }
+    print!("\n");
 }
 
 impl Tower {
