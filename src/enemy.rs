@@ -10,7 +10,7 @@ pub struct EnemyPlugin;
 pub struct Enemy {
     speed: f32,
     attack: f32,
-    health: f32,
+    pub health: f32,
     max_hp: f32,
     timer: Timer,
 }
@@ -28,6 +28,11 @@ fn update_enemies(
     time: Res<Time>,
 ) {
     for (entity, mut enemy, mut transform) in q_enemies.iter_mut() {
+        if enemy.health <= 0.0 {
+            commands.entity(entity).despawn_recursive();
+            continue;
+        }
+
         let mut longest = f32::INFINITY;
         let mut target = Vec3::ZERO;
         let mut target_tower = None;

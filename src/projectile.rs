@@ -1,7 +1,7 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::collide_aabb::collide};
 use bevy_inspector_egui::Inspectable;
 
-use crate::TILE_SIZE;
+use crate::{enemy::Enemy, TILE_SIZE};
 
 pub const PROJECTILE_LAYER: f32 = 20.0;
 pub struct ProjectilePlugin;
@@ -21,12 +21,31 @@ impl Plugin for ProjectilePlugin {
 
 fn update_projectiles(
     mut commands: Commands,
-    mut q_projectiles: Query<(&mut Transform, &Projectile)>,
+    mut q_projectiles: Query<
+        (Entity, &mut Transform, &Projectile),
+        (With<Projectile>, Without<Enemy>),
+    >,
+    mut q_enemies: Query<(&mut Enemy, &mut Transform), With<Enemy>>,
     time: Res<Time>,
 ) {
-    for (mut transform, projectile) in q_projectiles.iter_mut() {
+    for (entity, mut transform, projectile) in q_projectiles.iter_mut() {
         let delta = (projectile.direction * projectile.speed * time.delta_seconds()).extend(0.0);
         transform.translation += delta;
+
+        let e = q_enemies.iter_mut().find(|x| {
+            collide(
+                x.1.translation,
+                Vec2::splat(TILE_SIZE * 0.7),
+                transform.translation,
+                Vec2::splat(TILE_SIZE * 0.2),
+            )
+            .is_some()
+        });
+
+        if let Some((mut enemy, _)) = e {
+            enemy.health -= projectile.damage;
+            commands.entity(entity).despawn_recursive();
+        }
     }
 }
 
