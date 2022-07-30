@@ -67,7 +67,7 @@ impl Enemy {
                     custom_size: Some(Vec2::splat(TILE_SIZE * 0.7)),
                     ..Default::default()
                 },
-                texture: asset_server.load("sprites/tower.png"),
+                texture: asset_server.load("sprites/enemy.png"),
                 transform: Transform {
                     translation,
                     ..Default::default()

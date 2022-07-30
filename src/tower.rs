@@ -1,9 +1,9 @@
-use std::f32::consts::PI;
+use std::{cmp::Ordering, f32::consts::PI};
 
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::{math::Vec3Swizzles, prelude::*, sprite::Anchor};
 use bevy_inspector_egui::Inspectable;
 
-use crate::TILE_SIZE;
+use crate::{enemy::Enemy, TILE_SIZE};
 
 pub struct TowerPlugin;
 
@@ -24,13 +24,27 @@ impl Plugin for TowerPlugin {
 
 fn update_towers(
     mut commands: Commands,
-    mut q_towers: Query<(Entity, &mut Tower, &mut Transform)>,
-    mut q_bars: Query<(&mut Sprite, &mut Transform), (With<HPBar>, Without<Tower>)>,
+    mut q_towers: Query<(Entity, &mut Tower, &mut Transform), Without<Enemy>>,
+    mut q_bars: Query<(&mut Sprite, &mut Transform), (With<HPBar>, Without<Tower>, Without<Enemy>)>,
+    mut q_enemies: Query<(Entity, &mut Enemy, &mut Transform), (Without<Tower>, With<Enemy>)>,
     time: Res<Time>,
 ) {
     for (entity, mut tower, mut transform) in q_towers.iter_mut() {
         let pos: Vec2 = transform.translation.truncate();
-        let target: Vec2 = Vec2::new(0.0, 0.0);
+        let mut target: Vec2 = Vec2::new(0.0, 0.0);
+
+        let closest_enemy = q_enemies.iter().min_by(|a, b| {
+            if (a.2.translation.xy() - pos).length_squared()
+                < (b.2.translation.xy() - pos).length_squared()
+            {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            }
+        });
+        if let Some(x) = closest_enemy {
+            target = x.2.translation.xy();
+        }
 
         let angle = (pos - target).angle_between(Vec2::new(1.0, 0.0)) - PI / 2.0;
         if !angle.is_nan() {
