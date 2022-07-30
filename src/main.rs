@@ -6,6 +6,7 @@ use bevy::{
 use debug::DebugPlugin;
 use enemy::{Enemy, EnemyPlugin};
 use map::MapPlugin;
+use projectile::ProjectilePlugin;
 use tower::TowerPlugin;
 use user_interface::UserInterfacePlugin;
 
@@ -17,6 +18,7 @@ pub const TILE_SIZE: f32 = 0.15;
 mod debug;
 mod enemy;
 mod map;
+mod projectile;
 mod tower;
 mod user_interface;
 
@@ -33,8 +35,7 @@ fn main() {
         })
         .insert_resource(LogSettings {
             level: Level::TRACE,
-            filter: "info,wgpu_core=warn,wgpu_hal=warn,base_defense=info,base_defense::tower=info"
-                .to_string(),
+            filter: "info,wgpu_core=warn,wgpu_hal=warn,base_defense::projectile=debug".to_string(),
         })
         .add_plugins(DefaultPlugins)
         .add_startup_system(spawn_camera)
@@ -44,6 +45,7 @@ fn main() {
         .add_plugin(TowerPlugin)
         .add_plugin(UserInterfacePlugin)
         .add_plugin(EnemyPlugin)
+        .add_plugin(ProjectilePlugin)
         .add_system(cursor_position)
         .run();
 }

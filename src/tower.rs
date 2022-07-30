@@ -3,7 +3,11 @@ use std::{cmp::Ordering, f32::consts::PI};
 use bevy::{math::Vec3Swizzles, prelude::*, sprite::Anchor};
 use bevy_inspector_egui::Inspectable;
 
-use crate::{enemy::Enemy, TILE_SIZE};
+use crate::{
+    enemy::Enemy,
+    projectile::{Projectile, PROJECTILE_LAYER},
+    TILE_SIZE,
+};
 
 pub struct TowerPlugin;
 
@@ -11,6 +15,12 @@ pub struct TowerPlugin;
 pub struct Tower {
     pub health: f32,
     hp_bar: Entity,
+}
+
+#[derive(Component, Default, Reflect)]
+#[reflect(Component)]
+pub struct AttackTimer {
+    timer: Timer,
 }
 
 #[derive(Component)]
@@ -24,12 +34,13 @@ impl Plugin for TowerPlugin {
 
 fn update_towers(
     mut commands: Commands,
-    mut q_towers: Query<(Entity, &mut Tower, &mut Transform), Without<Enemy>>,
+    mut q_towers: Query<(Entity, &mut Tower, &mut Transform, &mut AttackTimer), Without<Enemy>>,
     mut q_bars: Query<(&mut Sprite, &mut Transform), (With<HPBar>, Without<Tower>, Without<Enemy>)>,
     mut q_enemies: Query<(Entity, &mut Enemy, &mut Transform), (Without<Tower>, With<Enemy>)>,
     time: Res<Time>,
+    asset_server: Res<AssetServer>,
 ) {
-    for (entity, mut tower, mut transform) in q_towers.iter_mut() {
+    for (entity, mut tower, mut transform, mut attack_timer) in q_towers.iter_mut() {
         let pos: Vec2 = transform.translation.truncate();
         let mut target: Vec2 = Vec2::new(0.0, 0.0);
 
@@ -51,6 +62,17 @@ fn update_towers(
             transform.rotation = Quat::from_rotation_z(-angle);
         }
 
+        if let Some(_) = closest_enemy {
+            attack_timer.timer.tick(time.delta());
+            if attack_timer.timer.just_finished() {
+                Projectile::spawn(
+                    &mut commands,
+                    transform.translation.xy().extend(PROJECTILE_LAYER),
+                    transform.rotation.mul_vec3(Vec3::Y).xy(),
+                    &asset_server,
+                );
+            }
+        }
         if let Ok((mut sprite, mut transform)) = q_bars.get_mut(tower.hp_bar) {
             if let Some(size) = sprite.custom_size.as_mut() {
                 size.x = (TILE_SIZE * 0.85) * (tower.health / 100.0);
@@ -133,6 +155,9 @@ impl Tower {
                 hp_bar,
             })
             .insert(Name::new("Tower"))
+            .insert(AttackTimer {
+                timer: Timer::from_seconds(1.0, true),
+            })
             .id();
         commands.entity(tower).add_child(hp_bar);
     }
