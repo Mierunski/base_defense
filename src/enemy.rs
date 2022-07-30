@@ -5,12 +5,14 @@ use crate::{tower::Tower, TILE_SIZE};
 
 pub struct EnemyPlugin;
 
-#[derive(Component, Inspectable)]
+#[derive(Component, Default, Reflect)]
+#[reflect(Component)]
 pub struct Enemy {
     speed: f32,
     attack: f32,
     health: f32,
     max_hp: f32,
+    timer: Timer,
 }
 
 impl Plugin for EnemyPlugin {
@@ -28,20 +30,28 @@ fn update_enemies(
     for (entity, mut enemy, mut transform) in q_enemies.iter_mut() {
         let mut longest = f32::INFINITY;
         let mut target = Vec3::ZERO;
+        let mut target_tower = None;
         for (e_tower, mut tower, mut t_tower) in q_towers.iter_mut() {
-            let diff = t_tower.translation - transform.translation;
-            let cur_len = diff.length_squared();
+            let diff = t_tower.translation.xy() - transform.translation.xy();
+            let cur_len = diff.length();
             if cur_len < longest {
                 longest = cur_len;
-                target = diff;
+                target = diff.extend(transform.translation.z);
+                target_tower = Some(tower);
+                debug!(?diff, ?longest);
             }
         }
-
         if longest.is_infinite() {
             continue;
         }
+        if longest < TILE_SIZE * 0.3 {
+            enemy.timer.tick(time.delta());
+            if enemy.timer.just_finished() {
+                target_tower.unwrap().health -= enemy.attack;
+            }
+            continue;
+        }
         let norm_target = target.xy().normalize().extend(1.0);
-        debug!(?norm_target);
         let movement = norm_target * enemy.speed * time.delta_seconds();
         transform.translation += movement;
     }
@@ -69,6 +79,7 @@ impl Enemy {
                 max_hp: 100.0,
                 speed: 3.0 * TILE_SIZE,
                 health: 100.0,
+                timer: Timer::from_seconds(0.5, true),
             })
             .insert(Name::new("Enemy"))
             .id();

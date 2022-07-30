@@ -9,7 +9,7 @@ pub struct TowerPlugin;
 
 #[derive(Component, Inspectable)]
 pub struct Tower {
-    health: f32,
+    pub health: f32,
     hp_bar: Entity,
 }
 
@@ -60,7 +60,7 @@ fn update_towers(
 
 impl Tower {
     fn update(&mut self, time: f32) -> bool {
-        self.health -= 20.0 * time;
+        // self.health -= 20.0 * time;
         if self.health < 0.0 {
             return false;
         }

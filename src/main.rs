@@ -33,9 +33,8 @@ fn main() {
         })
         .insert_resource(LogSettings {
             level: Level::TRACE,
-            filter:
-                "debug,wgpu_core=warn,wgpu_hal=warn,base_defense=debug,base_defense::tower=info"
-                    .to_string(),
+            filter: "info,wgpu_core=warn,wgpu_hal=warn,base_defense=info,base_defense::tower=info"
+                .to_string(),
         })
         .add_plugins(DefaultPlugins)
         .add_startup_system(spawn_camera)
