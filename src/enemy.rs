@@ -3,7 +3,11 @@ use std::cmp::Ordering;
 use bevy::{math::Vec3Swizzles, prelude::*, transform};
 use bevy_inspector_egui::Inspectable;
 
-use crate::{hp_bar::Health, tower::Tower, TILE_SIZE};
+use crate::{
+    hp_bar::{create_hp_bar, Health},
+    tower::Tower,
+    TILE_SIZE,
+};
 
 pub struct EnemyPlugin;
 
@@ -12,8 +16,6 @@ pub struct EnemyPlugin;
 pub struct Enemy {
     speed: f32,
     attack: f32,
-    pub health: f32,
-    max_hp: f32,
     timer: Timer,
 }
 
@@ -26,17 +28,17 @@ impl Plugin for EnemyPlugin {
 fn update_enemies(
     mut commands: Commands,
     mut q_towers: Query<(Entity, &mut Health, &mut Tower, &mut Transform), Without<Enemy>>,
-    mut q_enemies: Query<(Entity, &mut Enemy, &mut Transform), Without<Tower>>,
+    mut q_enemies: Query<(Entity, &mut Health, &mut Enemy, &mut Transform), Without<Tower>>,
     time: Res<Time>,
 ) {
-    for (entity, mut enemy, mut transform) in q_enemies.iter_mut() {
-        if enemy.health <= 0.0 {
+    for (entity, mut health, mut enemy, mut transform) in q_enemies.iter_mut() {
+        if health.current <= 0.0 {
             commands.entity(entity).despawn_recursive();
             continue;
         }
 
         let pos: Vec2 = transform.translation.xy();
-        let mut closest_tower = q_towers.iter_mut().min_by(|a, b| {
+        let closest_tower = q_towers.iter_mut().min_by(|a, b| {
             if (a.3.translation.xy() - pos).length_squared()
                 < (b.3.translation.xy() - pos).length_squared()
             {
@@ -82,12 +84,21 @@ impl Enemy {
             })
             .insert(Enemy {
                 attack: 10.0,
-                max_hp: 100.0,
                 speed: 3.0 * TILE_SIZE,
-                health: 100.0,
                 timer: Timer::from_seconds(0.5, true),
             })
             .insert(Name::new("Enemy"))
+            .insert(Health {
+                current: 100.0,
+                max: 100.0,
+            })
             .id();
+        let hp_bar = create_hp_bar(
+            &mut commands,
+            Vec2::new(0.0, TILE_SIZE * 0.5),
+            Vec2::new(TILE_SIZE * 0.85, TILE_SIZE * 0.1),
+            enemy,
+        );
+        commands.entity(enemy).add_child(hp_bar);
     }
 }
