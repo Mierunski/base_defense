@@ -1,7 +1,10 @@
 use bevy::{
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
+    input::mouse::MouseWheel,
     prelude::*,
 };
+
+use crate::{MainCamera, TILE_SIZE};
 #[derive(Component)]
 struct FpsText;
 pub struct UserInterfacePlugin;
@@ -10,7 +13,46 @@ impl Plugin for UserInterfacePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(FrameTimeDiagnosticsPlugin::default())
             .add_startup_system(ui_setup)
-            .add_system(ui_update);
+            .add_system(ui_update)
+            .add_system(camera_follow);
+    }
+}
+
+pub const CAMERA_SPEED: f32 = 2.0;
+
+fn camera_follow(
+    mut camera_query: Query<(&mut Transform, &mut OrthographicProjection), With<MainCamera>>,
+    keyboard: Res<Input<KeyCode>>,
+    mut scroll_evr: EventReader<MouseWheel>,
+    time: Res<Time>,
+) {
+    let (mut camera_transform, mut projection) = camera_query.single_mut();
+
+    let speed = CAMERA_SPEED * time.delta_seconds() * projection.scale;
+    if keyboard.pressed(KeyCode::A) {
+        camera_transform.translation.x -= speed;
+    }
+    if keyboard.pressed(KeyCode::D) {
+        camera_transform.translation.x += speed;
+    }
+    if keyboard.pressed(KeyCode::W) {
+        camera_transform.translation.y += speed;
+    }
+    if keyboard.pressed(KeyCode::S) {
+        camera_transform.translation.y -= speed;
+    }
+    use bevy::input::mouse::MouseScrollUnit;
+    for ev in scroll_evr.iter() {
+        match ev.unit {
+            MouseScrollUnit::Line => {
+                projection.scale += ev.y * CAMERA_SPEED * 0.1;
+                projection.scale = projection.scale.clamp(0.4, 5.0);
+            }
+            MouseScrollUnit::Pixel => {
+                projection.scale += ev.y * CAMERA_SPEED * 0.1;
+                projection.scale = projection.scale.clamp(0.4, 5.0);
+            }
+        }
     }
 }
 
