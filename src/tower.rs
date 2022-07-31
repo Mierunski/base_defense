@@ -5,6 +5,7 @@ use bevy_inspector_egui::Inspectable;
 
 use crate::{
     enemy::Enemy,
+    hp_bar::{create_hp_bar, HPBar, Health},
     projectile::{Projectile, PROJECTILE_LAYER},
     TILE_SIZE,
 };
@@ -14,7 +15,6 @@ pub struct TowerPlugin;
 #[derive(Component, Inspectable)]
 pub struct Tower {
     pub health: f32,
-    hp_bar: Entity,
 }
 
 #[derive(Component, Default, Reflect)]
@@ -22,9 +22,6 @@ pub struct Tower {
 pub struct AttackTimer {
     timer: Timer,
 }
-
-#[derive(Component)]
-pub struct HPBar;
 
 impl Plugin for TowerPlugin {
     fn build(&self, app: &mut App) {
@@ -34,13 +31,26 @@ impl Plugin for TowerPlugin {
 
 fn update_towers(
     mut commands: Commands,
-    mut q_towers: Query<(Entity, &mut Tower, &mut Transform, &mut AttackTimer), Without<Enemy>>,
-    mut q_bars: Query<(&mut Sprite, &mut Transform), (With<HPBar>, Without<Tower>, Without<Enemy>)>,
+    mut q_towers: Query<
+        (
+            Entity,
+            &mut Health,
+            &mut Tower,
+            &mut Transform,
+            &mut AttackTimer,
+        ),
+        Without<Enemy>,
+    >,
     mut q_enemies: Query<(Entity, &mut Enemy, &mut Transform), (Without<Tower>, With<Enemy>)>,
     time: Res<Time>,
     asset_server: Res<AssetServer>,
 ) {
-    for (entity, mut tower, mut transform, mut attack_timer) in q_towers.iter_mut() {
+    for (entity, mut health, mut tower, mut transform, mut attack_timer) in q_towers.iter_mut() {
+        if health.current < 0.0 {
+            commands.entity(entity).despawn_recursive();
+            continue;
+        }
+
         let pos: Vec2 = transform.translation.truncate();
         let mut target: Vec2 = Vec2::new(0.0, 0.0);
 
@@ -73,24 +83,6 @@ fn update_towers(
                 );
             }
         }
-        if let Ok((mut sprite, mut transform)) = q_bars.get_mut(tower.hp_bar) {
-            if let Some(size) = sprite.custom_size.as_mut() {
-                size.x = (TILE_SIZE * 0.85) * (tower.health / 100.0);
-            }
-
-            if !angle.is_nan() {
-                let rot = Quat::from_rotation_z(angle);
-
-                debug!("{:?}", transform);
-                transform.translation =
-                    rot.mul_vec3(Vec3::new(-TILE_SIZE * 0.425, TILE_SIZE * 0.5, 11.0));
-                transform.rotation = rot;
-            }
-        }
-
-        if !tower.update(time.delta_seconds()) {
-            commands.entity(entity).despawn_recursive();
-        }
     }
 }
 
@@ -104,38 +96,10 @@ impl Tower {
     }
 
     pub fn create_tower(mut commands: Commands, translation: Vec3, asset_server: Res<AssetServer>) {
-        let hp_frame = commands
-            .spawn_bundle(SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgb(0.1, 0.1, 0.1),
-                    custom_size: Some(Vec2::new(TILE_SIZE * 0.9, TILE_SIZE * 0.15)),
-                    ..Default::default()
-                },
-                transform: Transform {
-                    translation: Vec3::new(TILE_SIZE * 0.425, 0.0, -0.1),
-                    ..Default::default()
-                },
-                ..Default::default()
-            })
-            .id();
-        let hp_bar = commands
-            .spawn_bundle(SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgb(0.1, 0.9, 0.1),
-                    custom_size: Some(Vec2::new(TILE_SIZE * 0.85, TILE_SIZE * 0.1)),
-                    anchor: Anchor::CenterLeft,
-                    ..Default::default()
-                },
-                transform: Transform {
-                    translation: Vec3::new(-TILE_SIZE * 0.425, TILE_SIZE * 0.5, 11.0),
-                    ..Default::default()
-                },
-                ..Default::default()
-            })
-            .insert(HPBar)
-            .add_child(hp_frame)
-            .id();
-
+        let trans = Transform {
+            translation,
+            ..Default::default()
+        };
         let tower = commands
             .spawn_bundle(SpriteBundle {
                 sprite: Sprite {
@@ -144,21 +108,25 @@ impl Tower {
                     ..Default::default()
                 },
                 texture: asset_server.load("sprites/tower.png"),
-                transform: Transform {
-                    translation,
-                    ..Default::default()
-                },
+                transform: trans,
                 ..Default::default()
             })
-            .insert(Tower {
-                health: 100.0,
-                hp_bar,
-            })
+            .insert(Tower { health: 100.0 })
             .insert(Name::new("Tower"))
             .insert(AttackTimer {
                 timer: Timer::from_seconds(1.0, true),
             })
+            .insert(Health {
+                current: 100.0,
+                max: 100.0,
+            })
             .id();
+        let hp_bar = create_hp_bar(
+            &mut commands,
+            Vec2::new(0.0, TILE_SIZE * 0.5),
+            Vec2::new(TILE_SIZE * 0.85, TILE_SIZE * 0.1),
+            tower,
+        );
         commands.entity(tower).add_child(hp_bar);
     }
 }

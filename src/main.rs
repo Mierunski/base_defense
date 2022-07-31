@@ -5,6 +5,7 @@ use bevy::{
 };
 use debug::DebugPlugin;
 use enemy::{Enemy, EnemyPlugin};
+use hp_bar::HPBarsPlugin;
 use map::MapPlugin;
 use projectile::ProjectilePlugin;
 use tower::TowerPlugin;
@@ -17,6 +18,7 @@ pub const TILE_SIZE: f32 = 0.15;
 
 mod debug;
 mod enemy;
+mod hp_bar;
 mod map;
 mod projectile;
 mod tower;
@@ -46,6 +48,7 @@ fn main() {
         .add_plugin(UserInterfacePlugin)
         .add_plugin(EnemyPlugin)
         .add_plugin(ProjectilePlugin)
+        .add_plugin(HPBarsPlugin)
         .add_system(cursor_position)
         .run();
 }

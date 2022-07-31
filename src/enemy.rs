@@ -1,7 +1,9 @@
+use std::cmp::Ordering;
+
 use bevy::{math::Vec3Swizzles, prelude::*, transform};
 use bevy_inspector_egui::Inspectable;
 
-use crate::{tower::Tower, TILE_SIZE};
+use crate::{hp_bar::Health, tower::Tower, TILE_SIZE};
 
 pub struct EnemyPlugin;
 
@@ -23,7 +25,7 @@ impl Plugin for EnemyPlugin {
 
 fn update_enemies(
     mut commands: Commands,
-    mut q_towers: Query<(Entity, &mut Tower, &mut Transform), Without<Enemy>>,
+    mut q_towers: Query<(Entity, &mut Health, &mut Tower, &mut Transform), Without<Enemy>>,
     mut q_enemies: Query<(Entity, &mut Enemy, &mut Transform), Without<Tower>>,
     time: Res<Time>,
 ) {
@@ -33,30 +35,29 @@ fn update_enemies(
             continue;
         }
 
-        let mut longest = f32::INFINITY;
-        let mut target = Vec3::ZERO;
-        let mut target_tower = None;
-        for (e_tower, mut tower, mut t_tower) in q_towers.iter_mut() {
-            let diff = t_tower.translation.xy() - transform.translation.xy();
-            let cur_len = diff.length();
-            if cur_len < longest {
-                longest = cur_len;
-                target = diff.extend(transform.translation.z);
-                target_tower = Some(tower);
-                debug!(?diff, ?longest);
+        let pos: Vec2 = transform.translation.xy();
+        let mut closest_tower = q_towers.iter_mut().min_by(|a, b| {
+            if (a.3.translation.xy() - pos).length_squared()
+                < (b.3.translation.xy() - pos).length_squared()
+            {
+                Ordering::Less
+            } else {
+                Ordering::Greater
             }
-        }
-        if longest.is_infinite() {
+        });
+        if closest_tower.is_none() {
             continue;
         }
-        if longest < TILE_SIZE * 0.3 {
+        let (mut entity, mut health, tower, target) = closest_tower.unwrap();
+        let diff = target.translation.xy() - pos;
+        if diff.length() < TILE_SIZE * 0.3 {
             enemy.timer.tick(time.delta());
             if enemy.timer.just_finished() {
-                target_tower.unwrap().health -= enemy.attack;
+                health.current -= enemy.attack;
             }
             continue;
         }
-        let norm_target = target.xy().normalize().extend(1.0);
+        let norm_target = diff.normalize().extend(1.0);
         let movement = norm_target * enemy.speed * time.delta_seconds();
         transform.translation += movement;
     }
