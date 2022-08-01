@@ -7,3 +7,5 @@ edition = "2021"
 bevy = { version = "0.8", features = ["dynamic"] }
 # Disable untill support is added
 # bevy-inspector-egui = "0.11"
+
+bevy_egui = "0.15"
