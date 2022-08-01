@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, f32::consts::PI};
 
 use bevy::{math::Vec3Swizzles, prelude::*, sprite::Anchor};
-use bevy_inspector_egui::Inspectable;
+// use bevy_inspector_egui::Inspectable;
 
 use crate::{
     enemy::Enemy,
@@ -12,7 +12,7 @@ use crate::{
 
 pub struct TowerPlugin;
 
-#[derive(Component, Inspectable)]
+#[derive(Component)]
 pub struct Tower {
     pub health: f32,
 }

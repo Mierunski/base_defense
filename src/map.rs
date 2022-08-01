@@ -7,6 +7,8 @@ pub struct Map;
 
 pub struct MapPlugin;
 
+const MAP_SIZE: i32 = 50;
+
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(create_simple_map);
@@ -17,8 +19,8 @@ fn create_simple_map(mut commands: Commands) {
     let mut tiles = Vec::new();
     tiles.reserve_exact(10000);
 
-    for y in -50..50 {
-        for x in -50..50 {
+    for y in -MAP_SIZE..MAP_SIZE {
+        for x in -MAP_SIZE..MAP_SIZE {
             let tile = commands
                 .spawn_bundle(SpriteBundle {
                     sprite: Sprite {
@@ -27,7 +29,7 @@ fn create_simple_map(mut commands: Commands) {
                         ..Default::default()
                     },
                     transform: Transform {
-                        translation: Vec3::new(y as f32 * TILE_SIZE, x as f32 * TILE_SIZE, 0.0),
+                        translation: Vec3::new(y as f32 * TILE_SIZE, x as f32 * TILE_SIZE, 1.0),
                         ..Default::default()
                     },
                     ..Default::default()
@@ -38,10 +40,8 @@ fn create_simple_map(mut commands: Commands) {
     }
 
     commands
-        .spawn()
+        .spawn_bundle(SpatialBundle::default())
         .insert(Map)
         .insert(Name::new("Map"))
-        .insert(Transform::default())
-        .insert(GlobalTransform::default())
         .push_children(&tiles);
 }

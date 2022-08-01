@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
     render::camera::{RenderTarget, ScalingMode},
 };
-use debug::DebugPlugin;
+// use debug::DebugPlugin;
 use enemy::{Enemy, EnemyPlugin};
 use hp_bar::HPBarsPlugin;
 use map::MapPlugin;
@@ -16,7 +16,7 @@ use crate::tower::Tower;
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.15;
 
-mod debug;
+// mod debug;
 mod enemy;
 mod hp_bar;
 mod map;
@@ -43,7 +43,7 @@ fn main() {
         .add_startup_system(spawn_camera)
         .add_startup_system(spawn_cursor_marker)
         .add_plugin(MapPlugin)
-        .add_plugin(DebugPlugin)
+        // .add_plugin(DebugPlugin)
         .add_plugin(TowerPlugin)
         .add_plugin(UserInterfacePlugin)
         .add_plugin(EnemyPlugin)
@@ -55,13 +55,13 @@ fn main() {
 #[derive(Component)]
 struct MainCamera;
 fn spawn_camera(mut commands: Commands) {
-    let mut camera = OrthographicCameraBundle::new_2d();
+    let mut camera = Camera2dBundle::default();
 
-    camera.orthographic_projection.top = 1.0;
-    camera.orthographic_projection.bottom = -1.0;
-    camera.orthographic_projection.right = 1.0 * RESOLUTION;
-    camera.orthographic_projection.left = -1.0 * RESOLUTION;
-    camera.orthographic_projection.scaling_mode = ScalingMode::None;
+    camera.projection.top = 1.0;
+    camera.projection.bottom = -1.0;
+    camera.projection.right = 1.0 * RESOLUTION;
+    camera.projection.left = -1.0 * RESOLUTION;
+    camera.projection.scaling_mode = ScalingMode::None;
 
     commands.spawn_bundle(camera).insert(MainCamera);
 }
@@ -116,7 +116,7 @@ fn cursor_position(
         let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;
 
         // matrix for undoing the projection and camera transform
-        let ndc_to_world = camera_transform.compute_matrix() * camera.projection_matrix.inverse();
+        let ndc_to_world = camera_transform.compute_matrix() * camera.projection_matrix().inverse();
 
         // use it to convert ndc to world-space coordinates
         let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
