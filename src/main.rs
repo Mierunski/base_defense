@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
     render::camera::{RenderTarget, ScalingMode},
 };
-// use debug::DebugPlugin;
+use debug::DebugPlugin;
 use enemy::{Enemy, EnemyPlugin};
 use hp_bar::HPBarsPlugin;
 use map::MapPlugin;
@@ -16,7 +16,7 @@ use crate::tower::Tower;
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.15;
 
-// mod debug;
+mod debug;
 mod enemy;
 mod hp_bar;
 mod map;
@@ -43,9 +43,9 @@ fn main() {
         .add_startup_system(spawn_camera)
         .add_startup_system(spawn_cursor_marker)
         .add_plugin(MapPlugin)
-        // .add_plugin(DebugPlugin)
         .add_plugin(TowerPlugin)
         .add_plugin(UserInterfacePlugin)
+        .add_plugin(DebugPlugin)
         .add_plugin(EnemyPlugin)
         .add_plugin(ProjectilePlugin)
         .add_plugin(HPBarsPlugin)

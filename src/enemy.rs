@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 
 use bevy::{math::Vec3Swizzles, prelude::*, transform};
-// use bevy_inspector_egui::Inspectable;
 
 use crate::{
     hp_bar::{create_hp_bar, Health},
