@@ -1,3 +1,5 @@
+use crate::tower::Tower;
+use crate::user_interface::Icons;
 use bevy::{
     log::{Level, LogSettings},
     prelude::*,
@@ -11,8 +13,6 @@ use projectile::ProjectilePlugin;
 use tower::TowerPlugin;
 use user_interface::UserInterfacePlugin;
 
-use crate::tower::Tower;
-
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.15;
 
@@ -23,6 +23,11 @@ mod map;
 mod projectile;
 mod tower;
 mod user_interface;
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+enum AppState {
+    Main,
+    Building,
+}
 
 fn main() {
     let height = 900.0;
@@ -40,6 +45,7 @@ fn main() {
             filter: "info,wgpu_core=warn,wgpu_hal=warn,base_defense::projectile=debug".to_string(),
         })
         .add_plugins(DefaultPlugins)
+        .add_state(AppState::Main)
         .add_startup_system(spawn_camera)
         .add_startup_system(spawn_cursor_marker)
         .add_plugin(MapPlugin)
@@ -49,7 +55,8 @@ fn main() {
         .add_plugin(EnemyPlugin)
         .add_plugin(ProjectilePlugin)
         .add_plugin(HPBarsPlugin)
-        .add_system(cursor_position)
+        .add_system_set(SystemSet::on_update(AppState::Building).with_system(cursor_position))
+        .add_system(bevy::window::close_on_esc)
         .run();
 }
 #[derive(Component)]
@@ -78,7 +85,7 @@ fn spawn_cursor_marker(mut commands: Commands) {
                 ..Default::default()
             },
             transform: Transform {
-                translation: Vec3::new(0.0, 0.0, 1.0),
+                translation: Vec3::new(0.0, 0.0, 2.0),
                 ..Default::default()
             },
             ..Default::default()
@@ -95,6 +102,8 @@ fn cursor_position(
     mut q_marker: Query<&mut Transform, With<CursorMarker>>,
     buttons: Res<Input<MouseButton>>,
     asset_server: Res<AssetServer>,
+    mut selection: ResMut<Option<Icons>>,
+    mut app_state: ResMut<State<AppState>>,
 ) {
     // get the camera info and transform
     // assuming there is exactly one main camera entity, so query::single() is OK
@@ -128,9 +137,15 @@ fn cursor_position(
         marker.translation.x = tile_x * TILE_SIZE;
         marker.translation.y = tile_y * TILE_SIZE;
         if buttons.just_pressed(MouseButton::Left) {
-            Tower::create_tower(commands, marker.translation, asset_server);
+            if let Some(x) = *selection {
+                match x {
+                    Icons::Enemy => Enemy::new(commands, world_pos, asset_server),
+                    Icons::Tower => Tower::create_tower(commands, marker.translation, asset_server),
+                }
+            }
         } else if buttons.just_pressed(MouseButton::Right) {
-            Enemy::new(commands, world_pos, asset_server);
+            *selection = None;
+            app_state.set(AppState::Main);
         }
     }
 }

@@ -1,14 +1,17 @@
+use std::{collections::HashMap, fmt::format, iter::Map};
+
 use bevy::{
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     input::mouse::MouseWheel,
     prelude::*,
+    text, ui,
 };
 use bevy_egui::{
     egui::{self, ImageButton},
     EguiContext, EguiPlugin,
 };
 
-use crate::{MainCamera, TILE_SIZE};
+use crate::{AppState, MainCamera, TILE_SIZE};
 #[derive(Component)]
 struct FpsText;
 pub struct UserInterfacePlugin;
@@ -18,18 +21,44 @@ struct UiState {
     label: String,
     value: f32,
     inverted: bool,
-    egui_texture_handle: Option<egui::TextureHandle>,
-
-    bevy_icon: Handle<Image>,
+    enemy: egui::TextureId,
+    icons: HashMap<Icons, Icon>,
+}
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
+pub enum Icons {
+    Enemy,
+    Tower,
+}
+struct Icon {
+    handle: Handle<Image>,
+    texture_id: egui::TextureId,
     clicked: bool,
+}
+
+impl Icon {
+    fn new(
+        path: &str,
+        asset_server: &Res<AssetServer>,
+        mut egui_context: &mut ResMut<EguiContext>,
+    ) -> Icon {
+        let handle = asset_server.load(path);
+        let texture_id = egui_context.add_image(handle.clone_weak());
+
+        Icon {
+            handle,
+            texture_id,
+            clicked: false,
+        }
+    }
 }
 
 impl Plugin for UserInterfacePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(FrameTimeDiagnosticsPlugin::default())
             .init_resource::<UiState>()
+            .init_resource::<Option<Icons>>()
             .add_startup_system(ui_setup)
-            .add_system(ui_update)
+            // .add_system(ui_update)
             .add_system(camera_follow)
             .add_plugin(EguiPlugin)
             // Systems that create Egui widgets should be run during the `CoreStage::Update` stage,
@@ -37,36 +66,55 @@ impl Plugin for UserInterfacePlugin {
             .add_system(ui_example);
     }
 }
-fn ui_example(mut egui_context: ResMut<EguiContext>, mut ui_state: ResMut<UiState>) {
-    // egui::Window::new("Hello").show(egui_context.ctx_mut(), |ui| {
-    //     ui.label("world");
-    // });
-
-    let egui_texture_handle = egui_context.add_image(ui_state.bevy_icon.clone_weak());
-    // ui_state
-    //     .egui_texture_handle
-    //     .get_or_insert_with(|| {
-    //         egui_context
-    //             .ctx_mut()
-    //             .load_texture("Enemy", egui::ColorImage::example())
-    //     })
-    //     .clone();
-
-    egui::SidePanel::left("left_panel")
+fn ui_example(
+    mut egui_context: ResMut<EguiContext>,
+    mut ui_state: ResMut<UiState>,
+    diagnostics: Res<Diagnostics>,
+    mut app_state: ResMut<State<AppState>>,
+    mut selection: ResMut<Option<Icons>>,
+) {
+    egui::SidePanel::right("right_panel")
         .resizable(true)
         .show(egui_context.ctx_mut(), |ui| {
             // Shorter version:
-            ui.image(egui_texture_handle, [50.0, 50.0]);
-            if ui
-                .add(ImageButton::new(egui_texture_handle, [50.0, 50.0]).selected(ui_state.clicked))
-                .clicked()
-            {
-                ui_state.clicked = !ui_state.clicked;
+            for (key, icon) in ui_state.icons.iter_mut() {
+                if let Some(x) = *selection {
+                    if x == *key {
+                        icon.clicked = true;
+                    } else {
+                        icon.clicked = false;
+                    }
+                } else {
+                    icon.clicked = false;
+                }
+                if ui
+                    .add(ImageButton::new(icon.texture_id, [50.0, 50.0]).selected(icon.clicked))
+                    .clicked()
+                {
+                    icon.clicked = !icon.clicked;
+                    if icon.clicked {
+                        *selection = Some(*key);
+
+                        app_state.set(AppState::Building);
+                    } else {
+                        *selection = None;
+                        app_state.set(AppState::Main);
+                    }
+                }
             }
+
             ui.label("Hello world!");
             if ui.button("Click me").clicked() {
                 // take some action here
             };
+
+            if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
+                if let Some(average) = fps.average() {
+                    // Update the value of the second section
+                    ui.label(format!("FPS: {:.2}", average));
+                }
+            }
+
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
         .response
@@ -111,44 +159,18 @@ fn camera_follow(
     }
 }
 
-fn ui_setup(mut commands: Commands, mut ui_state: ResMut<UiState>, asset_server: Res<AssetServer>) {
-    // commands.spawn_bundle(UiCameraBundle::default());
-    // Rich text with multiple sections
-    ui_state.bevy_icon = asset_server.load("sprites/enemy.png");
-
-    commands
-        .spawn_bundle(
-            // Create a TextBundle that has a Text with a list of sections.
-            TextBundle::from_sections([
-                TextSection::new(
-                    "FPS: ",
-                    TextStyle {
-                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                        font_size: 60.0,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::from_style(TextStyle {
-                    font: asset_server.load("fonts/FiraMono-Medium.ttf"),
-                    font_size: 60.0,
-                    color: Color::GOLD,
-                }),
-            ])
-            .with_style(Style {
-                align_self: AlignSelf::FlexEnd,
-                ..default()
-            }),
-        )
-        .insert(FpsText);
-}
-
-fn ui_update(diagnostics: Res<Diagnostics>, mut query: Query<&mut Text, With<FpsText>>) {
-    for mut text in query.iter_mut() {
-        if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
-            if let Some(average) = fps.average() {
-                // Update the value of the second section
-                text.sections[1].value = format!("{:.2}", average);
-            }
-        }
-    }
+fn ui_setup(
+    mut commands: Commands,
+    mut ui_state: ResMut<UiState>,
+    asset_server: Res<AssetServer>,
+    mut egui_context: ResMut<EguiContext>,
+) {
+    ui_state.icons.insert(
+        Icons::Enemy,
+        Icon::new("sprites/enemy.png", &asset_server, &mut egui_context),
+    );
+    ui_state.icons.insert(
+        Icons::Tower,
+        Icon::new("sprites/tower.png", &asset_server, &mut egui_context),
+    );
 }
