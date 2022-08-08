@@ -1,5 +1,5 @@
-use crate::tower::Tower;
 use crate::user_interface::Icons;
+use crate::{networking::NetworkingPlugin, tower::Tower};
 use bevy::{
     log::{Level, LogSettings},
     prelude::*,
@@ -20,9 +20,11 @@ mod debug;
 mod enemy;
 mod hp_bar;
 mod map;
+mod networking;
 mod projectile;
 mod tower;
 mod user_interface;
+
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 enum AppState {
     Main,
@@ -30,6 +32,9 @@ enum AppState {
 }
 
 fn main() {
+    println!("Usage: server [SERVER_PORT] or client [SERVER_PORT] [USER_NAME]");
+    let args: Vec<String> = std::env::args().collect();
+
     let height = 900.0;
     App::new()
         .insert_resource(WindowDescriptor {
@@ -46,6 +51,7 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_state(AppState::Main)
+        .add_plugin(NetworkingPlugin::new(&args))
         .add_startup_system(spawn_camera)
         .add_startup_system(spawn_cursor_marker)
         .add_plugin(MapPlugin)
