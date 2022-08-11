@@ -64,9 +64,9 @@ impl NetworkingPlugin {
             RenetServer::new(current_time, server_config, connection_config, socket).unwrap();
         app.insert_resource(server);
 
-        app.add_system(Server::send_message_system);
-        app.add_system(Server::receive_message_system);
-        app.add_system(Server::handle_events_system);
+        app.add_system(server::send_message_system);
+        app.add_system(server::receive_message_system);
+        app.add_system(server::handle_events_system);
     }
 
     fn start_client(&self, app: &mut App) {
@@ -93,15 +93,15 @@ impl NetworkingPlugin {
         app.add_plugin(RenetClientPlugin);
         app.insert_resource(client);
 
-        app.add_system(Client::send_message_system);
-        app.add_system(Client::receive_message_system);
+        app.add_system(client::send_message_system);
+        app.add_system(client::receive_message_system);
 
         app.insert_resource(RenetClientVisualizer::<200>::new(
             RenetVisualizerStyle::default(),
         ));
     }
 }
-mod Server {
+mod server {
     use bevy::prelude::*;
     use bevy_renet::renet::{RenetServer, ServerEvent};
 
@@ -144,7 +144,7 @@ mod Server {
     }
 }
 
-mod Client {
+mod client {
     use bevy::prelude::*;
     use bevy_egui::EguiContext;
     use bevy_renet::renet::RenetClient;
