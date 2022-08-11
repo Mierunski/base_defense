@@ -11,7 +11,7 @@ use hp_bar::HPBarsPlugin;
 use map::MapPlugin;
 use projectile::ProjectilePlugin;
 use tower::TowerPlugin;
-use user_interface::UserInterfacePlugin;
+use user_interface::{RightPanelWidth, UserInterfacePlugin};
 
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.15;
@@ -110,6 +110,7 @@ fn cursor_position(
     asset_server: Res<AssetServer>,
     mut selection: ResMut<Option<Icons>>,
     mut app_state: ResMut<State<AppState>>,
+    panel_width: Res<RightPanelWidth>,
 ) {
     // get the camera info and transform
     // assuming there is exactly one main camera entity, so query::single() is OK
@@ -126,6 +127,10 @@ fn cursor_position(
     if let Some(screen_pos) = wnd.cursor_position() {
         // get the size of the window
         let window_size = Vec2::new(wnd.width() as f32, wnd.height() as f32);
+
+        if screen_pos.x > wnd.width() - panel_width.0 {
+            return;
+        }
 
         // convert screen position [0..resolution] to ndc [-1..1] (gpu coordinates)
         let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;

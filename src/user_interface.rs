@@ -51,12 +51,15 @@ impl Icon {
         }
     }
 }
+#[derive(Default)]
+pub struct RightPanelWidth(pub f32);
 
 impl Plugin for UserInterfacePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(FrameTimeDiagnosticsPlugin::default())
             .init_resource::<UiState>()
             .init_resource::<Option<Icons>>()
+            .init_resource::<RightPanelWidth>()
             .add_startup_system(ui_setup)
             // .add_system(ui_update)
             .add_system(camera_follow)
@@ -72,8 +75,9 @@ fn ui_example(
     diagnostics: Res<Diagnostics>,
     mut app_state: ResMut<State<AppState>>,
     mut selection: ResMut<Option<Icons>>,
+    mut panel_width: ResMut<RightPanelWidth>,
 ) {
-    egui::SidePanel::right("right_panel")
+    panel_width.0 = egui::SidePanel::right("right_panel")
         .resizable(true)
         .show(egui_context.ctx_mut(), |ui| {
             // Shorter version:
