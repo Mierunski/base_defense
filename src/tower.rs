@@ -13,9 +13,7 @@ use crate::{
 pub struct TowerPlugin;
 
 #[derive(Component, Inspectable)]
-pub struct Tower {
-    pub health: f32,
-}
+pub struct Tower;
 
 #[derive(Component, Default, Reflect)]
 #[reflect(Component)]
@@ -97,7 +95,7 @@ impl Tower {
                 transform: trans,
                 ..Default::default()
             })
-            .insert(Tower { health: 100.0 })
+            .insert(Tower)
             .insert(Name::new("Tower"))
             .insert(AttackTimer {
                 timer: Timer::from_seconds(1.0, true),

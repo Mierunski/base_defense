@@ -1,16 +1,17 @@
-
-use crate::{networking::NetworkingPlugin};
+use crate::networking::NetworkingPlugin;
 use bevy::{
     log::{Level, LogSettings},
     prelude::*,
 };
 use debug::DebugPlugin;
-use enemy::{EnemyPlugin};
+use enemy::EnemyPlugin;
 use hp_bar::HPBarsPlugin;
 use map::MapPlugin;
 use projectile::ProjectilePlugin;
 use tower::TowerPlugin;
-use user_interface::{UserInterfacePlugin};
+use user_interface::UserInterfacePlugin;
+extern crate noise;
+
 
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.15;

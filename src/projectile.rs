@@ -11,6 +11,7 @@ pub struct Projectile {
     damage: f32,
     speed: f32,
     direction: Vec2,
+    range: f32,
 }
 
 impl Plugin for ProjectilePlugin {
@@ -22,13 +23,13 @@ impl Plugin for ProjectilePlugin {
 fn update_projectiles(
     mut commands: Commands,
     mut q_projectiles: Query<
-        (Entity, &mut Transform, &Projectile),
+        (Entity, &mut Transform, &mut Projectile),
         (With<Projectile>, Without<Enemy>),
     >,
     mut q_enemies: Query<(&mut Health, &mut Transform), With<Enemy>>,
     time: Res<Time>,
 ) {
-    for (entity, mut transform, projectile) in q_projectiles.iter_mut() {
+    for (entity, mut transform, mut projectile) in q_projectiles.iter_mut() {
         let delta = (projectile.direction * projectile.speed * time.delta_seconds()).extend(0.0);
         transform.translation += delta;
 
@@ -44,6 +45,11 @@ fn update_projectiles(
 
         if let Some((mut enemy_hp, _)) = e {
             enemy_hp.current -= projectile.damage;
+            commands.entity(entity).despawn_recursive();
+        }
+
+        projectile.range -= delta.length();
+        if projectile.range <= 0.0 {
             commands.entity(entity).despawn_recursive();
         }
     }
@@ -74,6 +80,7 @@ impl Projectile {
                 damage: 20.0,
                 speed: 1.0,
                 direction,
+                range: 10.0 * TILE_SIZE,
             })
             .insert(Name::new("Projectile"))
             .id();
