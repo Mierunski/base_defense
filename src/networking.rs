@@ -20,7 +20,7 @@ struct Username(String);
 pub struct NetworkingPlugin {
     exec_type: String,
     server_addr: SocketAddr,
-    username: Username,
+    _username: Username,
 }
 
 impl Plugin for NetworkingPlugin {
@@ -38,10 +38,22 @@ impl Plugin for NetworkingPlugin {
 
 impl NetworkingPlugin {
     pub fn new(args: &Vec<String>) -> NetworkingPlugin {
+        let mut exec_type = "server".to_string();
+        if let Some(x) = args.get(1) {
+            exec_type = x.clone();
+        }
+        let mut server_addr = "127.0.0.1:5000".parse().unwrap();
+        if let Some(x) = args.get(2) {
+            server_addr = format!("127.0.0.1:{}", x).parse().unwrap();
+        }
+        let mut _username = Username("player".to_string());
+        if let Some(x) = args.get(3) {
+            _username = Username(x.clone());
+        }
         NetworkingPlugin {
-            exec_type: args[1].clone(),
-            server_addr: format!("127.0.0.1:{}", args[2]).parse().unwrap(),
-            username: Username(args[3].clone()),
+            exec_type,
+            server_addr,
+            _username,
         }
     }
 
@@ -129,10 +141,10 @@ mod server {
         mut server: ResMut<RenetServer>,
         mut server_events: EventReader<ServerEvent>,
     ) {
-        while let Some(event) = server.get_event() {
+        while let Some(_event) = server.get_event() {
             for event in server_events.iter() {
                 match event {
-                    ServerEvent::ClientConnected(id, user_data) => {
+                    ServerEvent::ClientConnected(id, _user_data) => {
                         println!("Client {} connected", id);
                     }
                     ServerEvent::ClientDisconnected(id) => {

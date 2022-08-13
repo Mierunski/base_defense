@@ -1,11 +1,10 @@
-use std::{collections::HashMap, fmt::format, iter::Map};
+use std::collections::HashMap;
 
 use bevy::{
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     input::mouse::MouseWheel,
     prelude::*,
     render::camera::{RenderTarget, ScalingMode},
-    text, ui,
 };
 use bevy_egui::{
     egui::{self, ImageButton},
@@ -19,10 +18,10 @@ pub struct UserInterfacePlugin;
 
 #[derive(Default)]
 struct UiState {
-    label: String,
-    value: f32,
-    inverted: bool,
-    enemy: egui::TextureId,
+    _label: String,
+    _value: f32,
+    _inverted: bool,
+    _enemy: egui::TextureId,
     icons: HashMap<Icons, Icon>,
 }
 #[derive(Eq, Hash, PartialEq, Clone, Copy)]
@@ -31,7 +30,7 @@ pub enum Icons {
     Tower,
 }
 struct Icon {
-    handle: Handle<Image>,
+    _handle: Handle<Image>,
     texture_id: egui::TextureId,
     clicked: bool,
 }
@@ -40,13 +39,13 @@ impl Icon {
     fn new(
         path: &str,
         asset_server: &Res<AssetServer>,
-        mut egui_context: &mut ResMut<EguiContext>,
+        egui_context: &mut ResMut<EguiContext>,
     ) -> Icon {
-        let handle = asset_server.load(path);
-        let texture_id = egui_context.add_image(handle.clone_weak());
+        let _handle = asset_server.load(path);
+        let texture_id = egui_context.add_image(_handle.clone_weak());
 
         Icon {
-            handle,
+            _handle,
             texture_id,
             clicked: false,
         }

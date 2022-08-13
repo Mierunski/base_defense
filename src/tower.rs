@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, f32::consts::PI};
 
-use bevy::{math::Vec3Swizzles, prelude::*, sprite::Anchor};
+use bevy::{math::Vec3Swizzles, prelude::*};
 use bevy_inspector_egui::Inspectable;
 
 use crate::{
@@ -32,20 +32,14 @@ impl Plugin for TowerPlugin {
 fn update_towers(
     mut commands: Commands,
     mut q_towers: Query<
-        (
-            Entity,
-            &mut Health,
-            &mut Tower,
-            &mut Transform,
-            &mut AttackTimer,
-        ),
-        Without<Enemy>,
+        (Entity, &mut Health, &mut Transform, &mut AttackTimer),
+        (With<Tower>, Without<Enemy>),
     >,
-    mut q_enemies: Query<(Entity, &mut Enemy, &mut Transform), (Without<Tower>, With<Enemy>)>,
+    q_enemies: Query<(Entity, &mut Enemy, &mut Transform), (Without<Tower>, With<Enemy>)>,
     time: Res<Time>,
     asset_server: Res<AssetServer>,
 ) {
-    for (entity, mut health, mut tower, mut transform, mut attack_timer) in q_towers.iter_mut() {
+    for (entity, health, mut transform, mut attack_timer) in q_towers.iter_mut() {
         if health.current < 0.0 {
             commands.entity(entity).despawn_recursive();
             continue;
@@ -87,14 +81,6 @@ fn update_towers(
 }
 
 impl Tower {
-    fn update(&mut self, time: f32) -> bool {
-        // self.health -= 20.0 * time;
-        if self.health < 0.0 {
-            return false;
-        }
-        true
-    }
-
     pub fn create_tower(mut commands: Commands, translation: Vec3, asset_server: Res<AssetServer>) {
         let trans = Transform {
             translation,
