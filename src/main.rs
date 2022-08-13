@@ -1,17 +1,16 @@
-use crate::user_interface::Icons;
-use crate::{networking::NetworkingPlugin, tower::Tower};
+
+use crate::{networking::NetworkingPlugin};
 use bevy::{
     log::{Level, LogSettings},
     prelude::*,
-    render::camera::{RenderTarget, ScalingMode},
 };
 use debug::DebugPlugin;
-use enemy::{Enemy, EnemyPlugin};
+use enemy::{EnemyPlugin};
 use hp_bar::HPBarsPlugin;
 use map::MapPlugin;
 use projectile::ProjectilePlugin;
 use tower::TowerPlugin;
-use user_interface::{RightPanelWidth, UserInterfacePlugin};
+use user_interface::{UserInterfacePlugin};
 
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.15;

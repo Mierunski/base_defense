@@ -51,12 +51,12 @@ fn update_projectiles(
 
 impl Projectile {
     pub fn spawn(
-        mut commands: &mut Commands,
+        commands: &mut Commands,
         translation: Vec3,
         direction: Vec2,
         asset_server: &Res<AssetServer>,
     ) {
-        let proj = commands
+        let _proj = commands
             .spawn_bundle(SpriteBundle {
                 sprite: Sprite {
                     color: Color::rgb(0.2, 0.2, 0.8),

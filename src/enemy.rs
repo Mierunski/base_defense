@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use bevy::{math::Vec3Swizzles, prelude::*, transform};
+use bevy::{math::Vec3Swizzles, prelude::*};
 
 use crate::{
     hp_bar::{create_hp_bar, Health},
@@ -30,7 +30,7 @@ fn update_enemies(
     mut q_enemies: Query<(Entity, &mut Health, &mut Enemy, &mut Transform), Without<Tower>>,
     time: Res<Time>,
 ) {
-    for (entity, mut health, mut enemy, mut transform) in q_enemies.iter_mut() {
+    for (entity, health, mut enemy, mut transform) in q_enemies.iter_mut() {
         if health.current <= 0.0 {
             commands.entity(entity).despawn_recursive();
             continue;
@@ -49,7 +49,7 @@ fn update_enemies(
         if closest_tower.is_none() {
             continue;
         }
-        let (mut entity, mut health, tower, target) = closest_tower.unwrap();
+        let (_entity, mut health, _tower, target) = closest_tower.unwrap();
         let diff = target.translation.xy() - pos;
         if diff.length() < TILE_SIZE * 0.3 {
             enemy.timer.tick(time.delta());
