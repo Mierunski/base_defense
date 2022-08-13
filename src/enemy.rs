@@ -1,11 +1,10 @@
-use std::cmp::Ordering;
-
+use crate::constants::*;
 use bevy::{math::Vec3Swizzles, prelude::*};
+use std::cmp::Ordering;
 
 use crate::{
     hp_bar::{create_hp_bar, Health},
     tower::Tower,
-    TILE_SIZE,
 };
 
 pub struct EnemyPlugin;

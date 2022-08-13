@@ -1,9 +1,8 @@
 use bevy::{prelude::*, sprite::collide_aabb::collide};
 use bevy_inspector_egui::Inspectable;
 
-use crate::{enemy::Enemy, hp_bar::Health, TILE_SIZE};
+use crate::{constants::*, enemy::Enemy, hp_bar::Health};
 
-pub const PROJECTILE_LAYER: f32 = 20.0;
 pub struct ProjectilePlugin;
 
 #[derive(Component, Inspectable)]

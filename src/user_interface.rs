@@ -11,7 +11,7 @@ use bevy_egui::{
     EguiContext, EguiPlugin,
 };
 
-use crate::{enemy::Enemy, tower::Tower, AppState, RESOLUTION, TILE_SIZE};
+use crate::{constants::*, enemy::Enemy, tower::Tower, AppState};
 #[derive(Component)]
 struct FpsText;
 pub struct UserInterfacePlugin;

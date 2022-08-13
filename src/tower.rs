@@ -4,10 +4,10 @@ use bevy::{math::Vec3Swizzles, prelude::*};
 use bevy_inspector_egui::Inspectable;
 
 use crate::{
+    constants::*,
     enemy::Enemy,
     hp_bar::{create_hp_bar, Health},
-    projectile::{Projectile, PROJECTILE_LAYER},
-    TILE_SIZE,
+    projectile::Projectile,
 };
 
 pub struct TowerPlugin;

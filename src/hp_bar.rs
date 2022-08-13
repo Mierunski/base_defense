@@ -1,6 +1,6 @@
 use bevy::{prelude::*, sprite::Anchor};
 
-use crate::TILE_SIZE;
+use crate::constants::*;
 
 #[derive(Component)]
 pub struct HPBar {

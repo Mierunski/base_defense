@@ -11,11 +11,9 @@ use projectile::ProjectilePlugin;
 use tower::TowerPlugin;
 use user_interface::UserInterfacePlugin;
 extern crate noise;
+use constants::*;
 
-
-pub const RESOLUTION: f32 = 16.0 / 9.0;
-pub const TILE_SIZE: f32 = 0.15;
-
+mod constants;
 mod debug;
 mod enemy;
 mod hp_bar;

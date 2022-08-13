@@ -1,23 +1,19 @@
+use crate::constants::*;
 use bevy::prelude::*;
 use noise::{utils::PlaneMapBuilder, OpenSimplex};
-
 extern crate noise;
-use crate::TILE_SIZE;
 use bevy::prelude::Color;
-use noise::{utils::*};
+use noise::utils::*;
 #[derive(Component)]
 pub struct Map;
 
 pub struct MapPlugin;
-
-const MAP_SIZE: i32 = 50;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(create_simple_map);
     }
 }
-const BOUND_SIZE: f64 = 8.0;
 
 fn create_simple_map(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut tiles = Vec::new();
@@ -26,13 +22,12 @@ fn create_simple_map(mut commands: Commands, asset_server: Res<AssetServer>) {
     let simplex = OpenSimplex::default();
 
     let noise_map = PlaneMapBuilder::new(&simplex)
-        .set_size((MAP_SIZE * 2) as usize, (MAP_SIZE * 2) as usize)
+        .set_size(MAP_SIZE as usize, MAP_SIZE as usize)
         .set_x_bounds(-BOUND_SIZE, BOUND_SIZE)
         .set_y_bounds(-BOUND_SIZE, BOUND_SIZE)
         .build();
-    noise_map.get_value(1, 1);
-    for y in -MAP_SIZE..MAP_SIZE {
-        for x in -MAP_SIZE..MAP_SIZE {
+    for y in -MAP_SIZE / 2..MAP_SIZE / 2 {
+        for x in -MAP_SIZE / 2..MAP_SIZE / 2 {
             let tile = commands
                 .spawn_bundle(SpriteBundle {
                     sprite: Sprite {
@@ -49,7 +44,9 @@ fn create_simple_map(mut commands: Commands, asset_server: Res<AssetServer>) {
                 .id();
             tiles.push(tile);
 
-            let gray = (noise_map.get_value((x + MAP_SIZE) as usize, (y + MAP_SIZE) as usize) + 0.5)
+            let gray = (noise_map
+                .get_value((x + MAP_SIZE / 2) as usize, (y + MAP_SIZE / 2) as usize)
+                + 0.5)
                 .clamp(0.0, 1.0) as f32;
             if gray > 0.8 {
                 let gold = commands
