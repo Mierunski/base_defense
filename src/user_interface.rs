@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::format};
 
 use bevy::{
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
@@ -10,8 +10,9 @@ use bevy_egui::{
     egui::{self, ImageButton},
     EguiContext, EguiPlugin,
 };
+use bevy_inspector_egui::egui::{epaint::image, Color32};
 
-use crate::{constants::*, enemy::Enemy, tower::Tower, AppState};
+use crate::{building::Miner, constants::*, enemy::Enemy, tower::Tower, AppState, PlayerResources};
 #[derive(Component)]
 struct FpsText;
 pub struct UserInterfacePlugin;
@@ -28,11 +29,13 @@ struct UiState {
 pub enum Icons {
     Enemy,
     Tower,
+    Miner,
 }
 struct Icon {
     _handle: Handle<Image>,
     texture_id: egui::TextureId,
     clicked: bool,
+    tint: Color,
 }
 
 impl Icon {
@@ -40,6 +43,7 @@ impl Icon {
         path: &str,
         asset_server: &Res<AssetServer>,
         egui_context: &mut ResMut<EguiContext>,
+        tint: Color,
     ) -> Icon {
         let _handle = asset_server.load(path);
         let texture_id = egui_context.add_image(_handle.clone_weak());
@@ -48,6 +52,7 @@ impl Icon {
             _handle,
             texture_id,
             clicked: false,
+            tint,
         }
     }
 }
@@ -79,6 +84,7 @@ fn ui_example(
     mut app_state: ResMut<State<AppState>>,
     mut selection: ResMut<Option<Icons>>,
     mut panel_width: ResMut<RightPanelWidth>,
+    player_resources: Res<PlayerResources>,
 ) {
     panel_width.0 = egui::SidePanel::right("right_panel")
         .resizable(true)
@@ -94,10 +100,14 @@ fn ui_example(
                 } else {
                     icon.clicked = false;
                 }
-                if ui
-                    .add(ImageButton::new(icon.texture_id, [50.0, 50.0]).selected(icon.clicked))
-                    .clicked()
-                {
+                let image_button = ImageButton::new(icon.texture_id, [50.0, 50.0])
+                    .selected(icon.clicked)
+                    .tint(Color32::from_rgb(
+                        (icon.tint.r() * 255.0) as u8,
+                        (icon.tint.g() * 255.0) as u8,
+                        (icon.tint.b() * 255.0) as u8,
+                    ));
+                if ui.add(image_button).clicked() {
                     icon.clicked = !icon.clicked;
                     if icon.clicked {
                         *selection = Some(*key);
@@ -110,7 +120,7 @@ fn ui_example(
                 }
             }
 
-            ui.label("Hello world!");
+            ui.label(format!("Gold: {:.0}", player_resources.gold));
             if ui.button("Click me").clicked() {
                 // take some action here
             };
@@ -173,11 +183,30 @@ fn ui_setup(
 ) {
     ui_state.icons.insert(
         Icons::Enemy,
-        Icon::new("sprites/enemy.png", &asset_server, &mut egui_context),
+        Icon::new(
+            "sprites/enemy.png",
+            &asset_server,
+            &mut egui_context,
+            COLOR_ENEMY,
+        ),
     );
     ui_state.icons.insert(
         Icons::Tower,
-        Icon::new("sprites/tower.png", &asset_server, &mut egui_context),
+        Icon::new(
+            "sprites/tower.png",
+            &asset_server,
+            &mut egui_context,
+            COLOR_TOWER,
+        ),
+    );
+    ui_state.icons.insert(
+        Icons::Miner,
+        Icon::new(
+            "sprites/tower.png",
+            &asset_server,
+            &mut egui_context,
+            COLOR_MINER,
+        ),
     );
 }
 
@@ -234,6 +263,7 @@ fn cursor_position(
                 match x {
                     Icons::Enemy => Enemy::new(commands, world_pos, asset_server),
                     Icons::Tower => Tower::create_tower(commands, marker.translation, asset_server),
+                    Icons::Miner => Miner::new(commands, marker.translation, asset_server),
                 }
             }
         } else if buttons.just_pressed(MouseButton::Right) {

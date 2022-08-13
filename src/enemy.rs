@@ -69,7 +69,7 @@ impl Enemy {
         let enemy = commands
             .spawn_bundle(SpriteBundle {
                 sprite: Sprite {
-                    color: Color::rgb(0.2, 0.8, 0.2),
+                    color: COLOR_ENEMY,
                     custom_size: Some(Vec2::splat(TILE_SIZE * 0.7)),
                     ..Default::default()
                 },

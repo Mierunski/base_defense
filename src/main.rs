@@ -1,4 +1,4 @@
-use crate::networking::NetworkingPlugin;
+use crate::{building::BuildingPlugin, networking::NetworkingPlugin};
 use bevy::{
     log::{Level, LogSettings},
     prelude::*,
@@ -13,6 +13,7 @@ use user_interface::UserInterfacePlugin;
 extern crate noise;
 use constants::*;
 
+mod building;
 mod constants;
 mod debug;
 mod enemy;
@@ -29,6 +30,10 @@ enum AppState {
     Building,
 }
 
+pub struct PlayerResources {
+    pub gold: f32,
+}
+
 fn main() {
     println!("Usage: server [SERVER_PORT] or client [SERVER_PORT] [USER_NAME]");
     let args: Vec<String> = std::env::args().collect();
@@ -38,7 +43,7 @@ fn main() {
         .insert_resource(WindowDescriptor {
             width: height * RESOLUTION,
             height: height,
-            title: "My game".to_string(),
+            title: "Base defense".to_string(),
             present_mode: bevy::window::PresentMode::Fifo,
             resizable: false,
             ..Default::default()
@@ -46,6 +51,9 @@ fn main() {
         .insert_resource(LogSettings {
             level: Level::TRACE,
             filter: "info,wgpu_core=warn,wgpu_hal=warn,base_defense::projectile=debug".to_string(),
+        })
+        .insert_resource(PlayerResources {
+            gold: STARTING_GOLD,
         })
         .add_plugins(DefaultPlugins)
         .add_state(AppState::Main)
@@ -57,6 +65,7 @@ fn main() {
         .add_plugin(EnemyPlugin)
         .add_plugin(ProjectilePlugin)
         .add_plugin(HPBarsPlugin)
+        .add_plugin(BuildingPlugin)
         .add_system(bevy::window::close_on_esc)
         .run();
 }
